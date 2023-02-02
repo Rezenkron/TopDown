@@ -26,8 +26,20 @@ namespace EnemySystem.Enemy
             {
                 Follow();
             }
+            else
+            {
+                GetTarget();
+            }
         }
 
+        private void GetTarget()
+        {
+            if (Physics2D.OverlapCircle(transform.position, TriggerRadius, layerMask: LayerMask.GetMask("Player")))
+            {
+                _target = Physics2D.OverlapCircle(transform.position, TriggerRadius, layerMask: LayerMask.GetMask("Player"))
+                    .gameObject;
+            }
+        }
         private void Follow()
         {
             _agent.SetDestination(_target.transform.position);
