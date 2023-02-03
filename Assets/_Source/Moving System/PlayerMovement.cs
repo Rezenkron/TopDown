@@ -4,26 +4,30 @@ using UnityEngine;
 
 namespace MovingSystem
 {
-    public sealed class PlayerMovement : MonoBehaviour
+    public sealed class PlayerMovement
     {
-        [SerializeField] internal float _speed;
-        [SerializeField] private Rigidbody2D _rigidbody;
+        private Rigidbody2D _rb;
+        private Player _player;
 
+        private Vector2 direction;
 
-        private Mover mover;
-
-        private void Awake()
+        internal PlayerMovement(Rigidbody2D rb, Player player)
         {
-            mover = new Mover(_rigidbody, this);
+            _rb = rb;
+            _player = player;
         }
-        void Update()
+        internal void Update()
         {
-            mover.Update();
+            direction.x = Input.GetAxis("Horizontal");
+            direction.y = Input.GetAxis("Vertical");
+
         }
 
-        private void FixedUpdate()
+        internal void FixedUpdate()
         {
-            mover.FixedUpdate();
+            _rb.MovePosition(_rb.position + direction * _player._speed * Time.fixedDeltaTime);
+
         }
     }
+
 }
