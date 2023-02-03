@@ -14,7 +14,7 @@ namespace EnemySystem.Enemy
 
         private void Hit()
         {
-            
+            // deal damage to player
         }
     }
 }

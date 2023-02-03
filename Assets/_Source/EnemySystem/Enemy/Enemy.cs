@@ -9,16 +9,22 @@ namespace EnemySystem.Enemy
     {
         [SerializeField] private EnemySettings enemySettings;
         [field: SerializeField] public float TriggerRadius { get; private set; }
+
+        public event Action OnEnemyDamageTaken;
+
         private GameObject _target;
         private NavMeshAgent _agent;
+        private float _health, _attackDelay;
 
         private void Start()
         {
             _agent = GetComponent<NavMeshAgent>();
-            _agent.speed = enemySettings.Speed;
             _agent.updateRotation = false;
             _agent.updateUpAxis = false;
+
+            _agent.speed = enemySettings.Speed;
             _agent.stoppingDistance = enemySettings.AttackRange;
+            _health = enemySettings.Health;
         }
 
         private void Update()
@@ -32,6 +38,8 @@ namespace EnemySystem.Enemy
             {
                 GetTarget();
             }
+
+            _attackDelay += Time.deltaTime;
         }
 
         private void OnDrawGizmosSelected()
@@ -55,19 +63,47 @@ namespace EnemySystem.Enemy
 
         private void Follow()
         {
-            _agent.SetDestination(_target.transform.position);
+            var targetPosition = _target.transform.position;
+            _agent.SetDestination(targetPosition);
+
+            var relative = transform.InverseTransformPoint(targetPosition);
+            var angle = Mathf.Atan2(relative.x, relative.y) * Mathf.Rad2Deg;
+            transform.Rotate(0, 0, -angle);
         }
 
         private void TryAttack()
         {
-            if (Vector2.Distance(_target.transform.position, transform.position) <= _agent.stoppingDistance)
+            if (Vector2.Distance(_target.transform.position, transform.position) <= _agent.stoppingDistance &&
+                _attackDelay >= enemySettings.AttackSpeed)
             {
-                Attack();
+                var raycastHit2D = Physics2D.Raycast(transform.position, transform.up, Mathf.Infinity,
+                    layerMask: LayerMask.GetMask("Player", "Obstacle"));
+                if (raycastHit2D.collider.gameObject.layer == LayerMask.NameToLayer("Player"))
+                {
+                    Attack();
+                }
             }
+        }
+
+        private void TakeDamage(float value)
+        {
+            OnEnemyDamageTaken?.Invoke();
+
+            _health -= value;
+            if (_health <= 0)
+            {
+                Death();
+            }
+        }
+
+        private void Death()
+        {
+            Destroy(gameObject);
         }
 
         protected virtual void Attack()
         {
+            _attackDelay = 0;
         }
     }
 }

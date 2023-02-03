@@ -17,7 +17,7 @@ namespace EnemySystem.Enemy
 
         private void Shoot(GameObject projectile)
         {
-            Instantiate(projectile, firePoint.position, Quaternion.identity);
+            Instantiate(projectile, firePoint.position, transform.rotation);
         }
     }
 }
