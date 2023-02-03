@@ -5,10 +5,10 @@ using UnityEngine.AI;
 
 namespace EnemySystem.Enemy
 {
-    public class Enemy : MonoBehaviour
+    public abstract class Enemy : MonoBehaviour
     {
         [SerializeField] private EnemySettings enemySettings;
-        [field:SerializeField] public float TriggerRadius { get; private set; }
+        [field: SerializeField] public float TriggerRadius { get; private set; }
         private GameObject _target;
         private NavMeshAgent _agent;
 
@@ -18,13 +18,15 @@ namespace EnemySystem.Enemy
             _agent.speed = enemySettings.Speed;
             _agent.updateRotation = false;
             _agent.updateUpAxis = false;
+            _agent.stoppingDistance = enemySettings.AttackRange;
         }
 
-        public virtual void Update()
+        private void Update()
         {
             if (_target)
             {
                 Follow();
+                TryAttack();
             }
             else
             {
@@ -32,23 +34,40 @@ namespace EnemySystem.Enemy
             }
         }
 
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.white;
+            var position = transform.position;
+            Gizmos.DrawWireSphere(position, TriggerRadius);
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(position, enemySettings.AttackRange);
+        }
+
         private void GetTarget()
         {
             if (Physics2D.OverlapCircle(transform.position, TriggerRadius, layerMask: LayerMask.GetMask("Player")))
             {
-                _target = Physics2D.OverlapCircle(transform.position, TriggerRadius, layerMask: LayerMask.GetMask("Player"))
+                _target = Physics2D.OverlapCircle(transform.position, TriggerRadius,
+                        layerMask: LayerMask.GetMask("Player"))
                     .gameObject;
             }
         }
+
         private void Follow()
         {
             _agent.SetDestination(_target.transform.position);
         }
-        
-        private void OnDrawGizmosSelected()
+
+        private void TryAttack()
         {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position,TriggerRadius);
+            if (Vector2.Distance(_target.transform.position, transform.position) <= _agent.stoppingDistance)
+            {
+                Attack();
+            }
+        }
+
+        protected virtual void Attack()
+        {
         }
     }
 }
